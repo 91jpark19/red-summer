@@ -43,17 +43,18 @@ if __name__ == "__main__":
     for file_name in tqdm(os.listdir(csv_folder_path + city), desc="Processing files", position=0, leave=True):
         if file_name.endswith(".csv"):
             file_path = os.path.join(csv_folder_path + city, file_name)
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path, encoding='latin1')
             df['date'] = pd.to_datetime(df['date'])
             newdf = df[df['date'] >= year]
+            
             texts=[]
             for text in newdf['text']:
                 texts.append(space_newline(text))
-            embeddings=model.encode(texts)
-
-            cosine_similarity_scores = cosine_similarity([input_vector], embeddings)
-
-            newdf["similarity"] = list(cosine_similarity_scores[0])
-
-            new_file_path = os.path.join(new_csv_folder_path, file_name.replace(".csv", "_cosine_similarity.csv"))
-            newdf.to_csv(new_file_path, index=False)
+            if len(texts) == 0:
+                continue
+            else:
+                embeddings=model.encode(texts)
+                cosine_similarity_scores = cosine_similarity([input_vector], embeddings)
+                newdf["similarity"] = list(cosine_similarity_scores[0])
+                new_file_path = os.path.join(new_csv_folder_path, file_name.replace(".csv", "_cosine_similarity.csv"))
+                newdf.to_csv(new_file_path, index=False)
