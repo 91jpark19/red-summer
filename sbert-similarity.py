@@ -1,4 +1,5 @@
 import os
+import warnings
 import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
@@ -19,6 +20,8 @@ def space_newline(input_string):
     return ' '.join(filtered_words)
 
 if __name__ == "__main__":
+    # Ignore warnings
+    warnings.filterwarnings("ignore")
     model_name = "bert-base-nli-mean-tokens"
     model = SentenceTransformer(model_name)
 
@@ -44,17 +47,33 @@ if __name__ == "__main__":
         if file_name.endswith(".csv"):
             file_path = os.path.join(csv_folder_path + city, file_name)
             df = pd.read_csv(file_path, encoding='latin1')
-            df['date'] = pd.to_datetime(df['date'])
-            newdf = df[df['date'] >= year]
-            
-            texts=[]
-            for text in newdf['text']:
-                texts.append(space_newline(text))
-            if len(texts) == 0:
-                continue
-            else:
-                embeddings=model.encode(texts)
-                cosine_similarity_scores = cosine_similarity([input_vector], embeddings)
-                newdf["similarity"] = list(cosine_similarity_scores[0])
-                new_file_path = os.path.join(new_csv_folder_path, file_name.replace(".csv", "_cosine_similarity.csv"))
-                newdf.to_csv(new_file_path, index=False)
+            try:
+                df['pub_date'] = pd.to_datetime(df['date'])
+                newdf = df[df['pub_date'] >= year]
+                texts=[]
+                for text in newdf['text']:
+                    texts.append(space_newline(text))
+                if len(texts) == 0:
+                    continue
+                else:
+                    embeddings=model.encode(texts)
+                    cosine_similarity_scores = cosine_similarity([input_vector], embeddings)
+                    newdf["similarity"] = list(cosine_similarity_scores[0])
+                    new_file_path = os.path.join(new_csv_folder_path, file_name.replace(".csv", "_cosine_similarity.csv"))
+                    newdf.to_csv(new_file_path, index=False)
+            except:
+                print("Error processing file: " + file_name)
+            finally:
+                df['pub_date'] = pd.to_datetime(df['date'])
+                newdf = df[df['pub_date'] >= year]
+                texts=[]
+                for text in newdf['text']:
+                    texts.append(space_newline(text))
+                if len(texts) == 0:
+                    continue
+                else:
+                    embeddings=model.encode(texts)
+                    cosine_similarity_scores = cosine_similarity([input_vector], embeddings)
+                    newdf["similarity"] = list(cosine_similarity_scores[0])
+                    new_file_path = os.path.join(new_csv_folder_path, file_name.replace(".csv", "_cosine_similarity.csv"))
+                    newdf.to_csv(new_file_path, index=False)
