@@ -16,8 +16,9 @@ def search_dataframe(args):
     df['text'] = df['text'].astype(str)
     subset = df[df['text'].str.contains('|'.join(keywords), case=False)]
 
-    # Save the subset as a CSV file in the specified folder
-    subset.to_csv(os.path.join(folder, os.path.splitext(file)[0] + '.csv'), index=False)
+    # Save the subset as a Feather file in the specified folder
+    subset.reset_index(drop=True, inplace=True)  # Reset index for Feather
+    subset.to_feather(os.path.join(folder, os.path.splitext(file)[0] + '.feather'))
 
 if __name__ == '__main__':
     os.chdir('/Volumes/T7/chroniclingamerica/redsummer-keyword/')
