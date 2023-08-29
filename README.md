@@ -7,3 +7,5 @@ keyword_elaine = ['elaine', 'phillips', 'county', 'hoop', 'spur', 'adkins', 'col
 'murder, 'lynch', 'mob'] (1919-09-30)
 
 keyword_washington = ['washington', 'capitol', 'race', 'riot', 'elsie', 'stephnick', 'kill', 'murder', 'lynch', 'mob'] (1919-07-19)
+
+bert_sentence_chicago = 'chicago race riot eugene williams kill murder street beach'
