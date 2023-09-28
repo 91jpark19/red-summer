@@ -16,7 +16,8 @@ if __name__ == "__main__":
     # Input text
     city = input("Enter the city (e.g., chicago, elaine, washington): ")
     input_text = input("Enter your text: ")
-
+    # keyword_chicago: ['chicago', 'race', 'riot', 'eugene', 'williams', 'street', 'beach', 'kill', 'murder', 'lynch', 'mob']
+    # bert_sentence_chicago: "chicago race riot eugene williams kill murder street beach"
     # Preprocess the input text
     input_tokens = tokenizer(input_text, return_tensors='pt', padding=True, truncation=True)
     input_tokens = input_tokens.to(device)
@@ -25,41 +26,46 @@ if __name__ == "__main__":
     input_embedding = input_output.last_hidden_state.mean(dim=1)  # Average pooling
 
     # Folder containing Feather files
-    folder_path = '/Volumes/T7/chroniclingamerica/redsummer-keyword-article/'
+    folder_path = '/Volumes/T7/chroniclingamerica/redsummer-keyword-pseudo/'
     feather_folder_path = os.path.abspath(os.path.join(folder_path, city))
     # Get list of Feather files in the folder
     feather_files = [f for f in os.listdir(feather_folder_path) if f.endswith('.feather')]
 
     # Create the output folder if it doesn't exist
-    output_folder = os.path.join('/Volumes/T7/chroniclingamerica/redsummer-keyword-article/', city+'_cosine_similarity')
+    # saved_folder = '/Volumes/T7/chroniclingamerica/redsummer-keyword-article/chicago_cosine_similarity'
+    output_folder = os.path.join('/Volumes/T7/chroniclingamerica/redsummer-keyword-pseudo', city+'_cosine_similarity')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     # Iterate through each Feather file and calculate cosine similarity
     for file_name in tqdm(feather_files, desc="Processing files"):
-        file_path = os.path.join(feather_folder_path, file_name)
+        if file_name.replace('.feather','')+'_sim.feather' in os.listdir(output_folder): #00225879-part-00015-b1c639dc-2fc8-48be-8660-bd20c571e4e0-c000_article_sim.feather
+            # print('already done')
+            continue
+        else:
+            file_path = os.path.join(feather_folder_path, file_name)
 
         # Read Feather file into a DataFrame
-        df = pd.read_feather(file_path)
+            df = pd.read_feather(file_path)
 
-        similarities = []
+            similarities = []
 
         # Calculate cosine similarity for each row in the DataFrame
-        for idx, row in df.iterrows():
-            text = row['sent']
-            text_tokens = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
-            text_tokens = text_tokens.to(device)
-            with torch.no_grad():
-                text_output = model(**text_tokens)
-            text_embedding = text_output.last_hidden_state.mean(dim=1)  # Average pooling
-            cosine_sim = cosine_similarity(input_embedding.cpu(), text_embedding.cpu()).item()
-            similarities.append((row['date'], row['sent'], cosine_sim))
+            for idx, row in df.iterrows():
+                text = row['sent']
+                text_tokens = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+                text_tokens = text_tokens.to(device)
+                with torch.no_grad():
+                    text_output = model(**text_tokens)
+                text_embedding = text_output.last_hidden_state.mean(dim=1)  # Average pooling
+                cosine_sim = cosine_similarity(input_embedding.cpu(), text_embedding.cpu()).item()
+                similarities.append((row['date'], row['sent'], cosine_sim))
 
         # Create a DataFrame to store results
-        result_df = pd.DataFrame(similarities, columns=['date', 'sent', 'sim'])
+            result_df = pd.DataFrame(similarities, columns=['date', 'sent', 'sim'])
 
         # Save the result_df DataFrame to a Feather file in the output folder
-        output_file = os.path.join(output_folder, file_name.replace('.feather', '_sim.feather'))
-        result_df.to_feather(output_file)
+            output_file = os.path.join(output_folder, file_name.replace('_pseudo.feather', '_sim.feather'))
+            result_df.to_feather(output_file)
 
         # print("Results saved to:", output_file)
